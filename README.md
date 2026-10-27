@@ -23,7 +23,7 @@ in `./cars/` first, then here, then among the profiles it bundles.
 
 ## What to trust
 
-- **Measurements** — rectangles, outlines, visibility, adjacency, wheel layout
+- **Measurements** — rectangles, visibility, adjacency, wheel layout
   — are exact or computed, and say which.
 - **Bindings** say which texture is the body, the rims, the tires and so on.
   Every one here is `"source": "auto"`: the generator's proposal, right about
@@ -31,8 +31,10 @@ in `./cars/` first, then here, then among the profiles it bundles.
   it paints through one. Check it in the editor's Bindings panel and send the
   confirmation back; the two bundled with liverykit, `abarth500` and
   `tatuusfa1`, are confirmed and copied from it.
-- **Outlines** are simplified to at most 32 points. They clip artwork to an
-  island; they are not a livery template.
+- **No outlines or seams.** Together they sketch the car maker's UV layout,
+  which is theirs to publish. liverykit measures them from your own copy of
+  the car when its model matches the profile, for artwork that spans panels
+  and for the editor's outlines; everything else works without them.
 
 Each profile records the size and SHA-256 of the model it was measured from,
 and liverykit says so if your copy of the car differs. A car updated since is

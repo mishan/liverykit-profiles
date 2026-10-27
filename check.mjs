@@ -1,12 +1,12 @@
 // Validate every profile here with liverykit's own reader, plus what this
 // repository promises on top: named for its car, in the current format, with
-// the model it was measured from, and outlines too coarse to be a template.
+// the model it was measured from, and no outlines or seams: together they
+// sketch the car maker's UV layout.
 //
 //   node check.mjs        (with liverykit installed: npm install)
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { validateProfile, PROFILE_SCHEMA } from 'liverykit/src/profile.mjs';
-import { MAX_OUTLINE_POINTS } from 'liverykit/src/engine/islands.mjs';
 
 const problems = [];
 const files = (await readdir('cars')).filter((f) => f.endsWith('.json')).sort();
@@ -22,7 +22,8 @@ for (const f of files) {
   if (!p.name) say('has no display name');
   for (const [role, panels] of Object.entries(p.panels)) {
     for (const [name, q] of Object.entries(panels)) {
-      if (q.outline && q.outline.length > MAX_OUTLINE_POINTS) say(`${role}.${name} outline has ${q.outline.length} points`);
+      if (q.outline !== undefined) say(`${role}.${name} has an outline`);
+      if (q.seams !== undefined) say(`${role}.${name} has seams`);
     }
   }
 }

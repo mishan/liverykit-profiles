@@ -6,7 +6,7 @@
 // ours. Kunos ships ui_car.json without an `author` field and every mod in a
 // 252-car survey names one, so that is the test. The cars liverykit bundles
 // are copied from it rather than regenerated, so the two never disagree.
-import { readdir, readFile, copyFile, stat } from 'node:fs/promises';
+import { readdir, readFile, writeFile, copyFile, stat } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { join, resolve } from 'node:path';
@@ -19,6 +19,7 @@ if (!liverykit || !carsDir) {
   process.exit(2);
 }
 const { bestKn5 } = await import(join(liverykit, 'tools/fleet.mjs'));
+const { profileJson } = await import(join(liverykit, 'src/profile.mjs'));
 const out = resolve('cars');
 
 async function isKunos(id) {
@@ -35,11 +36,22 @@ for (const id of ids.sort()) {
   todo.push(id);
 }
 
+// Outlines and seams together sketch the car maker's UV layout, which is
+// theirs to publish, so they are not published here. liverykit measures them
+// from the model of whoever has the car, where it matches the profile's.
+async function stripLayout(id) {
+  const path = join(out, `${id}.json`);
+  const p = JSON.parse(await readFile(path, 'utf8'));
+  for (const panels of Object.values(p.panels ?? {})) for (const q of Object.values(panels)) { delete q.outline; delete q.seams; }
+  await writeFile(path, profileJson(p));
+}
+
 const bundled = new Set((await readdir(join(liverykit, 'cars'))).filter((f) => f.endsWith('.json')).map((f) => f.slice(0, -5)));
 const failed = [];
 async function one(id) {
   if (bundled.has(id)) {
     await copyFile(join(liverykit, 'cars', `${id}.json`), join(out, `${id}.json`));
+    await stripLayout(id);
     return console.log(`copied ${id} from liverykit`);
   }
   const kn5 = await bestKn5(join(carsDir, id));
@@ -49,6 +61,7 @@ async function one(id) {
     ...(await stat(skins).then(() => ['--skins', skins], () => []))];
   try {
     await run(process.execPath, args, { env: { ...process.env, LIVERYKIT_PRIOR_DIR: out }, maxBuffer: 1 << 26 });
+    await stripLayout(id);
     console.log(`generated ${id}`);
   } catch (e) {
     failed.push(`${id}: ${(e.stderr || e.message).trim().split('\n').pop()}`);
